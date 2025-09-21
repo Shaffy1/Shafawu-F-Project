@@ -1,6 +1,6 @@
 resource "aws_lambda_function" "new_post" {
   function_name = "content-new-post"
-  filename      = "${path.module}/../deploy/new_post.zip"
+  filename      = "${path.module}/../deploy/handler.zip"
   handler       = "handler.lambda_handler"
   runtime       = "python3.11"
   role          = aws_iam_role.lambda_new_post_role.arn
@@ -12,7 +12,7 @@ resource "aws_lambda_function" "new_post" {
     }
   }
 
-  source_code_hash = filebase64sha256("${path.module}/../deploy/new_post.zip")
+  source_code_hash = filebase64sha256("${path.module}/../deploy/handler.zip")
 }
 
 resource "aws_lambda_function" "convert_to_audio" {

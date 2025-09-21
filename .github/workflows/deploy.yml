@@ -26,7 +26,7 @@ jobs:
       - name: Create deploy directory & zip lambdas
         run: |
           mkdir -p deploy
-          zip -j deploy/new_post.zip lambda/handler.py
+          zip -j deploy/handler.zip lambda/handler.py
           zip -j deploy/convert_to_audio.zip lambda/convert_to_audio.py
           zip -j deploy/get_post.zip lambda/get_post.py
           ls -lh deploy
@@ -42,7 +42,7 @@ jobs:
           if [ -n "${{ secrets.TFSTATE_BUCKET }}" ]; then
             terraform init -input=false \
               -backend-config="bucket=${{ secrets.TFSTATE_BUCKET }}" \
-              -backend-config="key=polly-app/terraform.tfstate" \
+              -backend-config="key=content-app/terraform.tfstate" \
               -backend-config="region=${{ secrets.AWS_REGION }}" \
               -backend-config="dynamodb_table=${{ secrets.TFSTATE_LOCK_TABLE }}"
           else
@@ -56,28 +56,6 @@ jobs:
           terraform validate
 
       # 👇 Auto-import step: ensures existing resources are tracked instead of failing
-      - name: Terraform Import existing resources
-        working-directory: terraform
-        run: |
-          # DynamoDB
-          terraform import aws_dynamodb_table.posts polly_posts || true
-
-          # IAM Roles
-          terraform import aws_iam_role.lambda_new_post_role lambda_new_post_role || true
-          terraform import aws_iam_role.lambda_convert_role lambda_convert_role || true
-          terraform import aws_iam_role.lambda_get_role lambda_get_role || true
-
-          # Lambda Functions
-          terraform import aws_lambda_function.new_post polly-new-post || true
-          terraform import aws_lambda_function.convert_to_audio polly-convert-to-audio || true
-          terraform import aws_lambda_function.get_post polly-get-post || true
-
-          # Lambda Permissions (only if they already exist in AWS)
-          terraform import aws_lambda_permission.apigw_invoke_new_post polly-new-post/AllowAPIGatewayInvokeNewPost || true
-          terraform import aws_lambda_permission.apigw_invoke_get_post polly-get-post/AllowAPIGatewayInvokeGetPost || true
-          terraform import aws_lambda_permission.apigw_invoke_convert_to_audio polly-convert-to-audio/AllowAPIGatewayInvokeConvertToAudio || true
-          terraform import aws_lambda_permission.allow_sns_invoke polly-convert-to-audio/AllowExecutionFromSNS || true
-
       - name: Terraform Apply
         working-directory: terraform
         env:

@@ -188,7 +188,7 @@ resource "aws_api_gateway_deployment" "deployment" {
   rest_api_id = aws_api_gateway_rest_api.api.id
 
   triggers = {
-    redeploy = "${filebase64sha256("../deploy/new_post.zip")}-${filebase64sha256("../deploy/convert_to_audio.zip")}-${filebase64sha256("../deploy/get_post.zip")}"
+    redeploy = "${filebase64sha256("../deploy/handler.zip")}-${filebase64sha256("../deploy/convert_to_audio.zip")}-${filebase64sha256("../deploy/get_post.zip")}"
   }
 }
 
