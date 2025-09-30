@@ -7,16 +7,19 @@ variable "aws_region" {
 variable "mp3_bucket_name" {
   description = "S3 bucket name for audio files"
   type        = string
+  default     = "audio-storage-bucket-unique-2025"
 }
 
 variable "db_table_name" {
   description = "DynamoDB table name"
   type        = string
+  default     = "content_posts"
 }
 
 variable "sns_topic_name" {
   description = "SNS topic name"
   type        = string
+  default     = "content-processing-topic"
 }
 
 
