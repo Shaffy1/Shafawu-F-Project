@@ -81,6 +81,7 @@ jobs:
       - name: Terraform Import existing resources
         working-directory: terraform
         run: |
+          terraform import aws_s3_bucket.mp3_bucket audio-storage-bucket-unique-2025 || true
           terraform import aws_dynamodb_table.posts content_posts || true
           terraform import aws_iam_role.lambda_new_post_role content_new_post_role || true
           terraform import aws_iam_role.lambda_convert_role content_convert_role || true
@@ -89,6 +90,7 @@ jobs:
           terraform import aws_lambda_function.convert_to_audio content-convert-to-audio || true
           terraform import aws_lambda_function.get_post content-get-post || true
           terraform import aws_api_gateway_rest_api.api content-api || true
+          terraform import aws_sns_topic.post_topic content-processing-topic || true
 
       - name: Terraform Plan
         working-directory: terraform
