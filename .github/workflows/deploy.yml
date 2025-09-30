@@ -78,9 +78,23 @@ jobs:
           terraform import aws_lambda_permission.apigw_invoke_convert_to_audio polly-convert-to-audio/AllowAPIGatewayInvokeConvertToAudio || true
           terraform import aws_lambda_permission.allow_sns_invoke polly-convert-to-audio/AllowExecutionFromSNS || true
 
+      - name: Terraform Import existing resources
+        working-directory: terraform
+        run: |
+          terraform import aws_dynamodb_table.posts content_posts || true
+          terraform import aws_iam_role.lambda_new_post_role content_new_post_role || true
+          terraform import aws_iam_role.lambda_convert_role content_convert_role || true
+          terraform import aws_iam_role.lambda_get_role content_get_role || true
+          terraform import aws_lambda_function.new_post content-new-post || true
+          terraform import aws_lambda_function.convert_to_audio content-convert-to-audio || true
+          terraform import aws_lambda_function.get_post content-get-post || true
+          terraform import aws_api_gateway_rest_api.api content-api || true
+
+      - name: Terraform Plan
+        working-directory: terraform
+        run: terraform plan -out=tfplan
+
       - name: Terraform Apply
         working-directory: terraform
-        env:
-          TF_LOG: DEBUG   # enable detailed debug logging
-        run: terraform apply -auto-approve -input=false
-        timeout-minutes: 15  #timesout after 15 minutes
+        run: terraform apply -auto-approve tfplan
+        timeout-minutes: 20  #timesout after 15 minutes
