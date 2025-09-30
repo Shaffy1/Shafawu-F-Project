@@ -92,11 +92,11 @@ jobs:
           terraform import aws_api_gateway_rest_api.api content-api || true
           terraform import aws_sns_topic.post_topic content-processing-topic || true
 
-      - name: Terraform Plan
+      - name: Terraform Refresh
         working-directory: terraform
-        run: terraform plan -out=tfplan
+        run: terraform refresh
 
-      - name: Terraform Apply
+      - name: Terraform Apply CloudFront only
         working-directory: terraform
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve -target=aws_cloudfront_distribution.api_distribution
         timeout-minutes: 20  #timesout after 15 minutes
