@@ -2,7 +2,7 @@ name: Deploy infra & lambdas
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -55,10 +55,9 @@ jobs:
           terraform fmt -check
           terraform validate
 
-      # 👇 Auto-import step: ensures existing resources are tracked instead of failing
       - name: Terraform Apply
         working-directory: terraform
         env:
           TF_LOG: DEBUG   # enable detailed debug logging
         run: terraform apply -auto-approve -input=false
-        timeout-minutes: 15   # stop if stuck more than 15 mins
+        timeout-minutes: 15   
