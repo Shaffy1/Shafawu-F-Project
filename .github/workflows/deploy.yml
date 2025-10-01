@@ -33,9 +33,9 @@ jobs:
 
       - name: Update Lambda functions
         run: |
-          aws lambda update-function-code --function-name content-convert-to-audio --zip-file fileb://deploy/convert_to_audio.zip || true
-          aws lambda update-function-code --function-name content-new-post --zip-file fileb://deploy/new_post.zip || true
-          aws lambda update-function-code --function-name content-get-post --zip-file fileb://deploy/get_post.zip || true
+          aws lambda update-function-code --function-name content-convert-to-audio --zip-file fileb://deploy/convert_to_audio.zip
+          aws lambda update-function-code --function-name content-new-post --zip-file fileb://deploy/new_post.zip
+          aws lambda update-function-code --function-name content-get-post --zip-file fileb://deploy/get_post.zip
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
