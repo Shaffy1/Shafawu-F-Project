@@ -96,15 +96,7 @@ jobs:
         working-directory: terraform
         run: terraform refresh
 
-      - name: Terraform Apply new resources only
+      - name: Terraform Apply all resources
         working-directory: terraform
-        run: |
-          terraform apply -auto-approve -target=random_string.bucket_suffix
-          terraform apply -auto-approve -target=aws_s3_bucket.website
-          terraform apply -auto-approve -target=aws_s3_bucket_website_configuration.website
-          terraform apply -auto-approve -target=aws_s3_bucket_public_access_block.website
-          terraform apply -auto-approve -target=aws_s3_bucket_policy.website
-          terraform apply -auto-approve -target=aws_s3_object.index
-          terraform apply -auto-approve -target=aws_s3_object.styles
-          terraform apply -auto-approve -target=aws_s3_object.scripts
+        run: terraform apply -auto-approve
         timeout-minutes: 20  #timesout after 15 minutes
