@@ -5,6 +5,22 @@ import json
 
 def lambda_handler(event, context):
     print("Received event:", event)
+    
+    cors_headers = {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+        "Access-Control-Allow-Credentials": "false"
+    }
+    
+    # Handle preflight OPTIONS request
+    if event.get("httpMethod") == "OPTIONS":
+        return {
+            "statusCode": 200,
+            "headers": cors_headers,
+            "body": ""
+        }
 
     body = json.loads(event.get("body", "{}"))
 
@@ -51,14 +67,6 @@ def lambda_handler(event, context):
         print(f"Direct Lambda invocation sent for {recordId}")
     except Exception as e:
         print(f"Direct Lambda invocation failed: {e}")
-
-    cors_headers = {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
-        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-        "Access-Control-Allow-Credentials": "false"
-    }
 
     return {
         "statusCode": 200,

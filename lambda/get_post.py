@@ -7,11 +7,9 @@ dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ['DB_TABLE_NAME'])
 
 BUCKET_NAME = os.environ["BUCKET_NAME"]
-REGION = boto3.session.Session().region_name  # ✅ detect automatically
+REGION = boto3.session.Session().region_name
 
 def lambda_handler(event, context):
-    postId = event.get("queryStringParameters", {}).get("postId", "")
-
     cors_headers = {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
@@ -19,6 +17,16 @@ def lambda_handler(event, context):
         "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
         "Access-Control-Allow-Credentials": "false"
     }
+    
+    # Handle preflight OPTIONS request
+    if event.get("httpMethod") == "OPTIONS":
+        return {
+            "statusCode": 200,
+            "headers": cors_headers,
+            "body": ""
+        }
+
+    postId = event.get("queryStringParameters", {}).get("postId", "")
 
     if not postId:
         return {
