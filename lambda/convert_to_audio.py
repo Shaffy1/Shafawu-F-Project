@@ -54,7 +54,12 @@ def lambda_handler(event, context):
         ContentType="audio/mpeg"
     )
 
-    # Generate public S3 URL
+    # Set public-read ACL and generate public S3 URL
+    s3.put_object_acl(
+        Bucket=bucket_name,
+        Key=s3_key,
+        ACL='public-read'
+    )
     s3_url = f"https://{bucket_name}.s3.{region}.amazonaws.com/{s3_key}"
 
     # Update DynamoDB with status + URL

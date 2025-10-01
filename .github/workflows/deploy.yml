@@ -31,6 +31,10 @@ jobs:
           zip -j deploy/get_post.zip lambda/get_post.py
           ls -lh deploy
 
+      - name: Update Lambda functions
+        run: |
+          aws lambda update-function-code --function-name content-convert-to-audio --zip-file fileb://deploy/convert_to_audio.zip || true
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
