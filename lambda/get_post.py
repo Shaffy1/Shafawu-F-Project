@@ -36,10 +36,20 @@ def lambda_handler(event, context):
             )["Items"]
 
         for item in items:
-            if item.get("status") == "COMPLETED":
+            # Check for both possible status values
+            if item.get("status") in ["COMPLETED", "completed"]:
                 item["url"] = f"https://{BUCKET_NAME}.s3.{REGION}.amazonaws.com/{item['id']}.mp3"
             else:
                 item["url"] = None
+                # If still processing, check if audio file exists in S3
+                if item.get("status") in ["PROCESSING", "processing"]:
+                    s3 = boto3.client('s3')
+                    try:
+                        s3.head_object(Bucket=BUCKET_NAME, Key=f"{item['id']}.mp3")
+                        item["url"] = f"https://{BUCKET_NAME}.s3.{REGION}.amazonaws.com/{item['id']}.mp3"
+                        item["status"] = "completed"
+                    except:
+                        pass
 
         return {
             "statusCode": 200,
