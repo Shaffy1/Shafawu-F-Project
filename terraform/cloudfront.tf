@@ -16,7 +16,6 @@ resource "aws_cloudfront_distribution" "app_distribution" {
   origin {
     domain_name = "q7dnar5wh8.execute-api.${var.aws_region}.amazonaws.com"
     origin_id   = "API-Gateway"
-    origin_path = "/prod"
 
     custom_origin_config {
       http_port              = 443
@@ -60,9 +59,9 @@ resource "aws_cloudfront_distribution" "app_distribution" {
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Content-Type"]
+      headers      = ["*"]
       cookies {
-        forward = "none"
+        forward = "all"
       }
     }
 

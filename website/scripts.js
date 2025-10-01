@@ -1,4 +1,4 @@
-var API_BASE_URL = "/api";
+var API_BASE_URL = "/api/prod";
 
 document.getElementById("sayButton").onclick = function () {
     var inputData = {
