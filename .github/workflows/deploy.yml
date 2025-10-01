@@ -96,7 +96,7 @@ jobs:
         working-directory: terraform
         run: terraform refresh
 
-      - name: Terraform Apply website only
+      - name: Terraform Apply website and CloudFront
         working-directory: terraform
         run: |
           terraform apply -auto-approve \
@@ -107,5 +107,6 @@ jobs:
             -target=aws_s3_bucket_policy.website \
             -target=aws_s3_object.index \
             -target=aws_s3_object.styles \
-            -target=aws_s3_object.scripts
-        timeout-minutes: 20  #timesout after 15 minutes
+            -target=aws_s3_object.scripts \
+            -target=aws_cloudfront_distribution.app_distribution
+        timeout-minutes: 25  #timesout after 15 minutes
