@@ -27,11 +27,30 @@ def lambda_handler(event, context):
         }
     )
 
+    # Publish to SNS
     client = boto3.client('sns')
     client.publish(
         TopicArn=os.environ['SNS_TOPIC'],
         Message=recordId
     )
+    
+    # Also directly invoke convert function as backup
+    lambda_client = boto3.client('lambda')
+    try:
+        lambda_client.invoke(
+            FunctionName='content-convert-to-audio',
+            InvocationType='Event',
+            Payload=json.dumps({
+                'Records': [{
+                    'Sns': {
+                        'Message': recordId
+                    }
+                }]
+            })
+        )
+        print(f"Direct Lambda invocation sent for {recordId}")
+    except Exception as e:
+        print(f"Direct Lambda invocation failed: {e}")
 
     cors_headers = {
         "Content-Type": "application/json",
