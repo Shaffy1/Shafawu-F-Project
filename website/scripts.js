@@ -44,9 +44,10 @@ document.getElementById("searchButton").onclick = function () {
             jQuery.each(response, function (i, data) {
                 let player = "";
                 let download = "";
+                let refresh = "<button onclick='refreshPost(\"" + data['id'] + "\")' style='background:#4CAF50;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;'>🔄 Refresh</button>";
 
                 if (data['url']) {
-                    player = "<audio controls><source src='" + data['url'] + "' type='audio/mpeg'></audio>";
+                    player = "<audio controls preload='metadata'><source src='" + data['url'] + "' type='audio/mpeg'>Your browser does not support audio.</audio>";
                     download = "<br><a href='" + data['url'] + "' download style='text-decoration:none;color:orange;'>⬇️ Download MP3</a>";
                 }
 
@@ -55,7 +56,7 @@ document.getElementById("searchButton").onclick = function () {
                     <td>" + data['voice'] + "</td> \
                     <td>" + data['text'] + "</td> \
                     <td>" + data['status'] + "</td> \
-                    <td>" + player + download + "</td> \
+                    <td>" + player + download + "<br>" + refresh + "</td> \
                 </tr>");
             });
         },
@@ -69,3 +70,39 @@ document.getElementById("postText").onkeyup = function () {
     var length = $('#postText').val().length;
     document.getElementById("charCounter").textContent = "Characters: " + length;
 };
+
+function refreshPost(postId) {
+    $.ajax({
+        url: API_BASE_URL + "/get-post?postId=" + postId,
+        type: 'GET',
+        success: function (response) {
+            $('#posts tr').slice(1).remove();
+            
+            if (typeof response === "string") {
+                response = JSON.parse(response);
+            }
+            
+            jQuery.each(response, function (i, data) {
+                let player = "";
+                let download = "";
+                let refresh = "<button onclick='refreshPost(\"" + data['id'] + "\")' style='background:#4CAF50;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;'>🔄 Refresh</button>";
+
+                if (data['url']) {
+                    player = "<audio controls preload='metadata'><source src='" + data['url'] + "' type='audio/mpeg'>Your browser does not support audio.</audio>";
+                    download = "<br><a href='" + data['url'] + "' download style='text-decoration:none;color:orange;'>⬇️ Download MP3</a>";
+                }
+
+                $("#posts").append("<tr> \
+                    <td>" + data['id'] + "</td> \
+                    <td>" + data['voice'] + "</td> \
+                    <td>" + data['text'] + "</td> \
+                    <td>" + data['status'] + "</td> \
+                    <td>" + player + download + "<br>" + refresh + "</td> \
+                </tr>");
+            });
+        },
+        error: function (xhr) {
+            alert("Error refreshing: " + xhr.responseText);
+        }
+    });
+}
