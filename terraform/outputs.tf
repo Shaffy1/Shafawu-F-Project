@@ -17,3 +17,11 @@ output "cloudfront_domain" {
 output "cloudfront_url" {
   value = "https://${aws_cloudfront_distribution.api_distribution.domain_name}"
 }
+
+output "website_url" {
+  value = "http://${aws_s3_bucket.website.bucket}.s3-website-${var.aws_region}.amazonaws.com"
+}
+
+output "website_bucket" {
+  value = aws_s3_bucket.website.bucket
+}
