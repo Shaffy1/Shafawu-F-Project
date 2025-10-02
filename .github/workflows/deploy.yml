@@ -1,8 +1,8 @@
-name: Deploy infra & lambdas
+name: Deploy Polly App
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   deploy:
@@ -16,29 +16,12 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-east-1
 
-      - name: Setup Python (for zipping; optional)
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      - name: Create deploy directory & zip lambdas
+      - name: Create Lambda deployment package
         run: |
           mkdir -p deploy
-          zip -j deploy/new_post.zip lambda/handler.py
-          zip -j deploy/convert_to_audio.zip lambda/convert_to_audio.py
-          zip -j deploy/get_post.zip lambda/get_post.py
-          zip -j deploy/proxy.zip lambda/proxy.py
-          ls -lh deploy
-
-      - name: Update Lambda functions
-        run: |
-          echo "Updating Lambda functions with CORS fixes..."
-          aws lambda update-function-code --function-name content-convert-to-audio --zip-file fileb://deploy/convert_to_audio.zip
-          aws lambda update-function-code --function-name content-new-post --zip-file fileb://deploy/new_post.zip  
-          aws lambda update-function-code --function-name content-get-post --zip-file fileb://deploy/get_post.zip
-          echo "Lambda functions updated successfully"
+          zip -j deploy/api.zip lambda/api.py
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -47,78 +30,15 @@ jobs:
 
       - name: Terraform Init
         working-directory: terraform
-        run: |
-          if [ -n "${{ secrets.TFSTATE_BUCKET }}" ]; then
-            terraform init -input=false \
-              -backend-config="bucket=${{ secrets.TFSTATE_BUCKET }}" \
-              -backend-config="key=polly-app/terraform.tfstate" \
-              -backend-config="region=${{ secrets.AWS_REGION }}" \
-              -backend-config="dynamodb_table=${{ secrets.TFSTATE_LOCK_TABLE }}"
-          else
-            terraform init -input=false
-          fi
+        run: terraform init
 
-      - name: Terraform Format & Validate
+      - name: Import existing resources
         working-directory: terraform
         run: |
-          terraform fmt -check
-          terraform validate
+          terraform import aws_dynamodb_table.old_posts content_posts || true
+          terraform import aws_s3_bucket.old_audio audio-storage-bucket-unique-2025 || true
 
-      # 👇 Auto-import step: ensures existing resources are tracked instead of failing
-      - name: Terraform Import existing resources
+      - name: Terraform Apply
         working-directory: terraform
-        run: |
-          # DynamoDB
-          terraform import aws_dynamodb_table.posts polly_posts || true
-
-          # IAM Roles
-          terraform import aws_iam_role.lambda_new_post_role lambda_new_post_role || true
-          terraform import aws_iam_role.lambda_convert_role lambda_convert_role || true
-          terraform import aws_iam_role.lambda_get_role lambda_get_role || true
-
-          # Lambda Functions
-          terraform import aws_lambda_function.new_post polly-new-post || true
-          terraform import aws_lambda_function.convert_to_audio polly-convert-to-audio || true
-          terraform import aws_lambda_function.get_post polly-get-post || true
-
-          # Lambda Permissions (only if they already exist in AWS)
-          terraform import aws_lambda_permission.apigw_invoke_new_post polly-new-post/AllowAPIGatewayInvokeNewPost || true
-          terraform import aws_lambda_permission.apigw_invoke_get_post polly-get-post/AllowAPIGatewayInvokeGetPost || true
-          terraform import aws_lambda_permission.apigw_invoke_convert_to_audio polly-convert-to-audio/AllowAPIGatewayInvokeConvertToAudio || true
-          terraform import aws_lambda_permission.allow_sns_invoke polly-convert-to-audio/AllowExecutionFromSNS || true
-
-      - name: Terraform Import existing resources
-        working-directory: terraform
-        run: |
-          terraform import aws_s3_bucket.mp3_bucket audio-storage-bucket-unique-2025 || true
-          terraform import aws_dynamodb_table.posts content_posts || true
-          terraform import aws_iam_role.lambda_new_post_role content_new_post_role || true
-          terraform import aws_iam_role.lambda_convert_role content_convert_role || true
-          terraform import aws_iam_role.lambda_get_role content_get_role || true
-          terraform import aws_lambda_function.new_post content-new-post || true
-          terraform import aws_lambda_function.convert_to_audio content-convert-to-audio || true
-          terraform import aws_lambda_function.get_post content-get-post || true
-          terraform import aws_api_gateway_rest_api.api content-api || true
-          terraform import aws_sns_topic.post_topic content-processing-topic || true
-
-      - name: Terraform Refresh
-        working-directory: terraform
-        run: terraform refresh
-
-      - name: Import existing proxy role
-        working-directory: terraform
-        run: |
-          terraform import aws_iam_role.lambda_proxy_role content_proxy_role || true
-
-      - name: Terraform Apply website and CloudFront
-        working-directory: terraform
-        run: |
-          terraform apply -auto-approve \
-            -target=random_string.bucket_suffix \
-            -target=aws_s3_bucket.website \
-            -target=aws_s3_bucket_website_configuration.website \
-            -target=aws_s3_object.index \
-            -target=aws_s3_object.styles \
-            -target=aws_s3_object.scripts \
-            -target=aws_cloudfront_distribution.app_distribution
-        timeout-minutes: 25  #timesout after 15 minutes
+        run: terraform apply -auto-approve
+        timeout-minutes: 30

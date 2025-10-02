@@ -1,4 +1,5 @@
-var API_BASE_URL = "https://q7dnar5wh8.execute-api.us-east-1.amazonaws.com/prod";
+// API URL will be updated after deployment
+var API_BASE_URL = "https://YOUR_API_ID.execute-api.us-east-1.amazonaws.com/prod";
 
 document.getElementById("sayButton").onclick = function () {
     var inputData = {
