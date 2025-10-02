@@ -35,8 +35,8 @@ jobs:
       - name: Import existing resources
         working-directory: terraform
         run: |
-          terraform import aws_dynamodb_table.old_posts content_posts || true
-          terraform import aws_s3_bucket.old_audio audio-storage-bucket-unique-2025 || true
+          terraform import aws_dynamodb_table.posts content_posts || true
+          terraform import aws_s3_bucket.audio audio-storage-bucket-unique-2025 || true
 
       - name: Terraform Apply
         working-directory: terraform
