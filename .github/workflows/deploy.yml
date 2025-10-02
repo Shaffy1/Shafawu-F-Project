@@ -33,9 +33,11 @@ jobs:
 
       - name: Update Lambda functions
         run: |
+          echo "Updating Lambda functions with CORS fixes..."
           aws lambda update-function-code --function-name content-convert-to-audio --zip-file fileb://deploy/convert_to_audio.zip
-          aws lambda update-function-code --function-name content-new-post --zip-file fileb://deploy/new_post.zip
+          aws lambda update-function-code --function-name content-new-post --zip-file fileb://deploy/new_post.zip  
           aws lambda update-function-code --function-name content-get-post --zip-file fileb://deploy/get_post.zip
+          echo "Lambda functions updated successfully"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
