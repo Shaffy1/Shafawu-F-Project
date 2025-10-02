@@ -1,10 +1,9 @@
 resource "aws_lambda_function" "proxy" {
-  function_name = "content-proxy"
-  filename      = "${path.module}/../deploy/proxy.zip"
-  handler       = "proxy.lambda_handler"
-  runtime       = "python3.11"
-  role          = aws_iam_role.lambda_proxy_role.arn
-
+  function_name    = "content-proxy"
+  filename         = "${path.module}/../deploy/proxy.zip"
+  handler          = "proxy.lambda_handler"
+  runtime          = "python3.11"
+  role             = aws_iam_role.lambda_proxy_role.arn
   source_code_hash = filebase64sha256("${path.module}/../deploy/proxy.zip")
 }
 
@@ -40,8 +39,8 @@ resource "aws_iam_role_policy" "lambda_proxy_policy" {
         Resource = "arn:aws:dynamodb:${var.aws_region}:*:table/content_posts"
       },
       {
-        Effect = "Allow"
-        Action = ["lambda:InvokeFunction"]
+        Effect   = "Allow"
+        Action   = ["lambda:InvokeFunction"]
         Resource = "*"
       },
       {
