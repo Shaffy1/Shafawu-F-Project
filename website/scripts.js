@@ -1,5 +1,5 @@
-// API URL will be set after deployment
-var API_BASE_URL = "https://YOUR_API_ID.execute-api.us-east-1.amazonaws.com/prod";
+// Temporary hardcoded API URL - will be updated by deployment script
+var API_BASE_URL = "https://q7dnar5wh8.execute-api.us-east-1.amazonaws.com/prod";
 
 document.getElementById("sayButton").onclick = function () {
     var inputData = {
@@ -31,7 +31,7 @@ document.getElementById("searchButton").onclick = function () {
     }
 
     $.ajax({
-        url: API_BASE_URL + "/get-post?postId=" + postId,
+        url: API_BASE_URL + "/get_post?postId=" + postId,
         type: 'GET',
         success: function (response) {
             $('#posts tr').slice(1).remove();
@@ -40,7 +40,7 @@ document.getElementById("searchButton").onclick = function () {
                 response = JSON.parse(response);
             }
 
-            console.log("Respuesta:", response);
+            console.log("Response:", response);
 
             jQuery.each(response, function (i, data) {
                 let player = "";
@@ -74,7 +74,7 @@ document.getElementById("postText").onkeyup = function () {
 
 function refreshPost(postId) {
     $.ajax({
-        url: API_BASE_URL + "/get-post?postId=" + postId,
+        url: API_BASE_URL + "/get_post?postId=" + postId,
         type: 'GET',
         success: function (response) {
             $('#posts tr').slice(1).remove();

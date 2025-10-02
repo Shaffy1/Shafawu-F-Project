@@ -243,6 +243,10 @@ output "website_url" {
   value = "https://${aws_cloudfront_distribution.website.domain_name}"
 }
 
+output "website_bucket" {
+  value = aws_s3_bucket.website.bucket
+}
+
 output "api_url" {
   value = "https://${aws_api_gateway_rest_api.api.id}.execute-api.us-east-1.amazonaws.com/prod"
 }

@@ -36,3 +36,24 @@ jobs:
         working-directory: terraform
         run: terraform apply -auto-approve
         timeout-minutes: 30
+
+      - name: Update API URL and re-upload website
+        run: |
+          API_URL=$(cd terraform && terraform output -raw api_url)
+          WEBSITE_BUCKET=$(cd terraform && terraform output -raw website_bucket)
+          
+          # Update API URL in JavaScript
+          sed -i "s|https://YOUR_API_ID.execute-api.us-east-1.amazonaws.com/prod|$API_URL|g" website/scripts.js
+          
+          # Re-upload updated JavaScript file
+          aws s3 cp website/scripts.js s3://$WEBSITE_BUCKET/scripts.js --content-type "application/javascript"
+
+      - name: Update API URL in website
+        run: |
+          API_URL=$(cd terraform && terraform output -raw api_url)
+          sed -i "s|https://YOUR_API_ID.execute-api.us-east-1.amazonaws.com/prod|$API_URL|g" website/scripts.js
+          
+      - name: Upload updated website files
+        run: |
+          WEBSITE_BUCKET=$(cd terraform && terraform output -raw website_bucket)
+          aws s3 cp website/scripts.js s3://$WEBSITE_BUCKET/scripts.js --content-type "application/javascript"
