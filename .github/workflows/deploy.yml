@@ -32,6 +32,12 @@ jobs:
         working-directory: terraform
         run: terraform init -upgrade
 
+      - name: Import existing resources
+        working-directory: terraform
+        run: |
+          terraform import aws_dynamodb_table.posts polly-posts || true
+          terraform import aws_iam_role.lambda polly-lambda-role || true
+
       - name: Terraform Apply
         working-directory: terraform
         run: terraform apply -auto-approve
