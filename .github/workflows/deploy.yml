@@ -105,28 +105,19 @@ jobs:
         working-directory: terraform
         run: terraform refresh
 
-      - name: Terraform Apply website and CloudFront
+      - name: Import existing proxy role
+        working-directory: terraform
+        run: |
+          terraform import aws_iam_role.lambda_proxy_role content_proxy_role || true
+
+      - name: Terraform Apply website only
         working-directory: terraform
         run: |
           terraform apply -auto-approve \
             -target=random_string.bucket_suffix \
             -target=aws_s3_bucket.website \
             -target=aws_s3_bucket_website_configuration.website \
-            -target=aws_s3_bucket_public_access_block.website \
-            -target=aws_s3_bucket_policy.website \
             -target=aws_s3_object.index \
             -target=aws_s3_object.styles \
-            -target=aws_s3_object.scripts \
-            -target=aws_cloudfront_distribution.app_distribution \
-            -target=aws_lambda_function.proxy \
-            -target=aws_iam_role.lambda_proxy_role \
-            -target=aws_iam_role_policy.lambda_proxy_policy \
-            -target=aws_api_gateway_resource.proxy_resource \
-            -target=aws_api_gateway_method.proxy_method \
-            -target=aws_api_gateway_integration.proxy_integration \
-            -target=aws_lambda_permission.apigw_invoke_proxy \
-            -target=aws_api_gateway_method_response.new_post_cors \
-            -target=aws_api_gateway_integration_response.new_post_cors \
-            -target=aws_api_gateway_method_response.get_post_cors \
-            -target=aws_api_gateway_integration_response.get_post_cors
-        timeout-minutes: 25  #timesout after 15 minutes
+            -target=aws_s3_object.scripts
+        timeout-minutes: 15  #timesout after 15 minutes
