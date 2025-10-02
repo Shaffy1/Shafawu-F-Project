@@ -229,8 +229,13 @@ resource "aws_lambda_permission" "api_gateway" {
 
 resource "aws_api_gateway_deployment" "api" {
   rest_api_id = aws_api_gateway_rest_api.api.id
-  stage_name  = "prod"
   depends_on  = [aws_api_gateway_integration.proxy]
+}
+
+resource "aws_api_gateway_stage" "prod" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  deployment_id = aws_api_gateway_deployment.api.id
+  stage_name    = "prod"
 }
 
 # Outputs
