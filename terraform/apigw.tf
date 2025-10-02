@@ -1,1 +1,0 @@
-# This file is now empty - API Gateway configuration moved to main.tf

@@ -2,14 +2,6 @@ import json
 import boto3
 import uuid
 import os
-from boto3.dynamodb.conditions import Key
-
-dynamodb = boto3.resource('dynamodb')
-polly = boto3.client('polly')
-s3 = boto3.client('s3')
-
-table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
-audio_bucket = os.environ['AUDIO_BUCKET']
 
 def handler(event, context):
     headers = {
@@ -40,6 +32,9 @@ def create_post(event, headers):
     body = json.loads(event['body'])
     post_id = str(uuid.uuid4())
     
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
+    
     # Save to DynamoDB
     table.put_item(Item={
         'id': post_id,
@@ -50,6 +45,9 @@ def create_post(event, headers):
     
     # Generate audio with Polly
     try:
+        polly = boto3.client('polly')
+        s3 = boto3.client('s3')
+        
         response = polly.synthesize_speech(
             Text=body['text'],
             OutputFormat='mp3',
@@ -58,7 +56,7 @@ def create_post(event, headers):
         
         # Save to S3
         s3.put_object(
-            Bucket=audio_bucket,
+            Bucket=os.environ['AUDIO_BUCKET'],
             Key=f"{post_id}.mp3",
             Body=response['AudioStream'].read(),
             ContentType='audio/mpeg',
@@ -72,7 +70,7 @@ def create_post(event, headers):
             ExpressionAttributeNames={'#status': 'status', '#url': 'url'},
             ExpressionAttributeValues={
                 ':status': 'completed',
-                ':url': f"https://{audio_bucket}.s3.amazonaws.com/{post_id}.mp3"
+                ':url': f"https://{os.environ['AUDIO_BUCKET']}.s3.amazonaws.com/{post_id}.mp3"
             }
         )
         
@@ -82,6 +80,9 @@ def create_post(event, headers):
     return {'statusCode': 200, 'headers': headers, 'body': json.dumps(post_id)}
 
 def get_post(event, headers):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
+    
     post_id = event['queryStringParameters']['postId']
     
     if post_id == '*':

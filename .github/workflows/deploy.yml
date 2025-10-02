@@ -18,7 +18,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Create Lambda deployment package
+      - name: Create Lambda package
         run: |
           mkdir -p deploy
           zip -j deploy/api.zip lambda/api.py
@@ -31,12 +31,6 @@ jobs:
       - name: Terraform Init
         working-directory: terraform
         run: terraform init
-
-      - name: Import existing resources
-        working-directory: terraform
-        run: |
-          terraform import aws_dynamodb_table.posts content_posts || true
-          terraform import aws_s3_bucket.audio audio-storage-bucket-unique-2025 || true
 
       - name: Terraform Apply
         working-directory: terraform

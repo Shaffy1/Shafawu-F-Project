@@ -1,9 +1,22 @@
-# S3 Website Bucket
-resource "aws_s3_bucket" "website" {
-  bucket = "polly-app-${random_id.bucket_suffix.hex}"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
 }
 
-resource "random_id" "bucket_suffix" {
+provider "aws" {
+  region = "us-east-1"
+}
+
+# Website S3 Bucket
+resource "aws_s3_bucket" "website" {
+  bucket = "polly-website-${random_id.suffix.hex}"
+}
+
+resource "random_id" "suffix" {
   byte_length = 4
 }
 
@@ -43,7 +56,6 @@ resource "aws_s3_object" "website_files" {
     "styles.css" = "text/css"
     "scripts.js" = "application/javascript"
   }
-  
   bucket       = aws_s3_bucket.website.id
   key          = each.key
   source       = "${path.module}/../website/${each.key}"
@@ -51,7 +63,7 @@ resource "aws_s3_object" "website_files" {
   etag         = filemd5("${path.module}/../website/${each.key}")
 }
 
-# CloudFront Distribution
+# CloudFront
 resource "aws_cloudfront_distribution" "website" {
   origin {
     domain_name = aws_s3_bucket_website_configuration.website.website_endpoint
@@ -63,10 +75,8 @@ resource "aws_cloudfront_distribution" "website" {
       origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
-
   enabled             = true
   default_root_object = "index.html"
-
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
@@ -77,31 +87,28 @@ resource "aws_cloudfront_distribution" "website" {
       cookies { forward = "none" }
     }
   }
-
   restrictions {
     geo_restriction { restriction_type = "none" }
   }
-
   viewer_certificate {
     cloudfront_default_certificate = true
   }
 }
 
-# DynamoDB Table
+# DynamoDB
 resource "aws_dynamodb_table" "posts" {
-  name           = "content_posts"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "id"
-  
+  name         = "polly-posts"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
   attribute {
     name = "id"
     type = "S"
   }
 }
 
-# S3 Bucket for Audio Files
+# Audio S3 Bucket
 resource "aws_s3_bucket" "audio" {
-  bucket = "audio-storage-bucket-unique-2025"
+  bucket = "polly-audio-${random_id.suffix.hex}"
 }
 
 resource "aws_s3_bucket_public_access_block" "audio" {
@@ -126,8 +133,8 @@ resource "aws_s3_bucket_policy" "audio" {
   depends_on = [aws_s3_bucket_public_access_block.audio]
 }
 
-# Lambda IAM Role
-resource "aws_iam_role" "lambda_role" {
+# Lambda Role
+resource "aws_iam_role" "lambda" {
   name = "polly-lambda-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -139,59 +146,44 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
-resource "aws_iam_role_policy" "lambda_policy" {
+resource "aws_iam_role_policy" "lambda" {
   name = "polly-lambda-policy"
-  role = aws_iam_role.lambda_role.id
+  role = aws_iam_role.lambda.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream", 
-          "logs:PutLogEvents"
-        ]
+        Action = ["logs:*"]
         Resource = "arn:aws:logs:*:*:*"
       },
       {
         Effect = "Allow"
-        Action = [
-          "dynamodb:PutItem",
-          "dynamodb:GetItem",
-          "dynamodb:UpdateItem",
-          "dynamodb:Scan"
-        ]
+        Action = ["dynamodb:*"]
         Resource = aws_dynamodb_table.posts.arn
       },
       {
         Effect = "Allow"
-        Action = [
-          "polly:SynthesizeSpeech"
-        ]
+        Action = ["polly:SynthesizeSpeech"]
         Resource = "*"
       },
       {
         Effect = "Allow"
-        Action = [
-          "s3:PutObject",
-          "s3:PutObjectAcl"
-        ]
+        Action = ["s3:PutObject", "s3:PutObjectAcl"]
         Resource = "${aws_s3_bucket.audio.arn}/*"
       }
     ]
   })
 }
 
-# Lambda Functions
+# Lambda Function
 resource "aws_lambda_function" "api" {
   function_name    = "polly-api"
   filename         = "${path.module}/../deploy/api.zip"
   handler          = "api.handler"
   runtime          = "python3.11"
-  role             = aws_iam_role.lambda_role.arn
+  role             = aws_iam_role.lambda.arn
   source_code_hash = filebase64sha256("${path.module}/../deploy/api.zip")
-  
   environment {
     variables = {
       DYNAMODB_TABLE = aws_dynamodb_table.posts.name
