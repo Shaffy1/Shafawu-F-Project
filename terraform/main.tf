@@ -97,7 +97,7 @@ resource "aws_cloudfront_distribution" "website" {
 
 # DynamoDB
 resource "aws_dynamodb_table" "posts" {
-  name         = "polly-posts"
+  name         = "content_posts"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
   attribute {
@@ -108,7 +108,7 @@ resource "aws_dynamodb_table" "posts" {
 
 # Audio S3 Bucket
 resource "aws_s3_bucket" "audio" {
-  bucket = "polly-audio-${random_id.suffix.hex}"
+  bucket = "audio-storage-bucket-unique-2025"
 }
 
 resource "aws_s3_bucket_public_access_block" "audio" {
@@ -135,7 +135,7 @@ resource "aws_s3_bucket_policy" "audio" {
 
 # Lambda Role
 resource "aws_iam_role" "lambda" {
-  name = "polly-lambda-role"
+  name = "content_lambda_role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
