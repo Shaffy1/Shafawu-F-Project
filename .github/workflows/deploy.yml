@@ -39,10 +39,8 @@ jobs:
 
       - name: Update website files
         run: |
-          cd terraform
-          WEBSITE_BUCKET=$(terraform output website_bucket | tr -d '"\n')
-          cd ..
-          aws s3 cp website/scripts.js s3://$WEBSITE_BUCKET/scripts.js --content-type "application/javascript"
-          aws s3 cp website/index.html s3://$WEBSITE_BUCKET/index.html --content-type "text/html"
-          aws s3 cp website/styles.css s3://$WEBSITE_BUCKET/styles.css --content-type "text/css"
+          BUCKET_NAME=$(aws s3 ls | grep polly-website | awk '{print $3}')
+          aws s3 cp website/scripts.js s3://$BUCKET_NAME/scripts.js --content-type "application/javascript"
+          aws s3 cp website/index.html s3://$BUCKET_NAME/index.html --content-type "text/html"
+          aws s3 cp website/styles.css s3://$BUCKET_NAME/styles.css --content-type "text/css"
           
