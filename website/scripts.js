@@ -1,9 +1,9 @@
 var API_BASE_URL = "https://q7dnar5wh8.execute-api.us-east-1.amazonaws.com/prod";
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById("sayButton").onclick = function () {
-        var text = document.getElementById('postText').value.trim();
-        var voice = document.getElementById('voiceSelected').value;
+$(document).ready(function() {
+    $("#sayButton").click(function () {
+        var text = $('#postText').val().trim();
+        var voice = $('#voiceSelected').val();
         
         if (!text) {
             alert("Please enter some text to convert to speech.");
@@ -15,84 +15,108 @@ document.addEventListener('DOMContentLoaded', function() {
             "text": text
         };
 
-        fetch(API_BASE_URL + "/new_post", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+        $.ajax({
+            url: API_BASE_URL + "/new_post",
+            type: 'POST',
+            data: JSON.stringify(inputData),
+            contentType: 'application/json; charset=utf-8',
+            success: function (response) {
+                $("#postIDreturned").text("Post ID: " + response);
+                $('#postId').val(response);
             },
-            body: JSON.stringify(inputData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById("postIDreturned").textContent = "Post ID: " + data;
-            document.getElementById('postId').value = data;
-        })
-        .catch(error => {
-            alert("Error: " + error);
+            error: function (xhr) {
+                alert("Error: " + xhr.responseText);
+            }
         });
-    };
+    });
 
-    document.getElementById("searchButton").onclick = function () {
-        var postId = document.getElementById('postId').value.trim();
+    $("#searchButton").click(function () {
+        var postId = $('#postId').val().trim();
 
         if (postId === "") {
             alert("Please enter a post ID.");
             return;
         }
 
-        fetch(API_BASE_URL + "/get-post?postId=" + postId)
-        .then(response => response.json())
-        .then(data => {
-            var tbody = document.querySelector('#posts tbody');
-            tbody.innerHTML = '';
+        $.ajax({
+            url: API_BASE_URL + "/get-post?postId=" + postId,
+            type: 'GET',
+            success: function (response) {
+                $('#posts tbody').empty();
 
-            data.forEach(function(item) {
-                var row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${item.id}</td>
-                    <td>${item.voice}</td>
-                    <td>${item.text}</td>
-                    <td>${item.status}</td>
-                    <td>
-                        ${item.url ? `<audio controls><source src="${item.url}" type="audio/mpeg"></audio><br><a href="${item.url}" download>⬇️ Download</a>` : 'Processing...'}
-                        <br><button onclick="refreshPost('${item.id}')" style="background:#4CAF50;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">🔄 Refresh</button>
-                    </td>
-                `;
-            });
-        })
-        .catch(error => {
-            alert("Error: " + error);
+                if (typeof response === "string") {
+                    response = JSON.parse(response);
+                }
+
+                $.each(response, function (i, data) {
+                    var player = "";
+                    var download = "";
+                    
+                    if (data['url']) {
+                        player = "<audio controls><source src='" + data['url'] + "' type='audio/mpeg'></audio>";
+                        download = "<br><a href='" + data['url'] + "' download>⬇️ Download</a>";
+                    } else {
+                        player = "Processing...";
+                    }
+
+                    $("#posts tbody").append(
+                        "<tr>" +
+                        "<td>" + data['id'] + "</td>" +
+                        "<td>" + data['voice'] + "</td>" +
+                        "<td>" + data['text'] + "</td>" +
+                        "<td>" + data['status'] + "</td>" +
+                        "<td>" + player + download + "<br><button onclick='refreshPost(\"" + data['id'] + "\")' style='background:#4CAF50;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;'>🔄 Refresh</button></td>" +
+                        "</tr>"
+                    );
+                });
+            },
+            error: function (xhr) {
+                alert("Error: " + xhr.responseText);
+            }
         });
-    };
+    });
 
-    document.getElementById("postText").onkeyup = function () {
-        var length = document.getElementById('postText').value.length;
-        document.getElementById("charCounter").textContent = "Characters: " + length;
-    };
+    $("#postText").keyup(function () {
+        var length = $(this).val().length;
+        $("#charCounter").text("Characters: " + length);
+    });
 });
 
 function refreshPost(postId) {
-    fetch(API_BASE_URL + "/get-post?postId=" + postId)
-    .then(response => response.json())
-    .then(data => {
-        var tbody = document.querySelector('#posts tbody');
-        tbody.innerHTML = '';
-        
-        data.forEach(function(item) {
-            var row = tbody.insertRow();
-            row.innerHTML = `
-                <td>${item.id}</td>
-                <td>${item.voice}</td>
-                <td>${item.text}</td>
-                <td>${item.status}</td>
-                <td>
-                    ${item.url ? `<audio controls><source src="${item.url}" type="audio/mpeg"></audio><br><a href="${item.url}" download>⬇️ Download</a>` : 'Processing...'}
-                    <br><button onclick="refreshPost('${item.id}')" style="background:#4CAF50;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;">🔄 Refresh</button>
-                </td>
-            `;
-        });
-    })
-    .catch(error => {
-        alert("Error refreshing: " + error);
+    $.ajax({
+        url: API_BASE_URL + "/get-post?postId=" + postId,
+        type: 'GET',
+        success: function (response) {
+            $('#posts tbody').empty();
+            
+            if (typeof response === "string") {
+                response = JSON.parse(response);
+            }
+            
+            $.each(response, function (i, data) {
+                var player = "";
+                var download = "";
+                
+                if (data['url']) {
+                    player = "<audio controls><source src='" + data['url'] + "' type='audio/mpeg'></audio>";
+                    download = "<br><a href='" + data['url'] + "' download>⬇️ Download</a>";
+                } else {
+                    player = "Processing...";
+                }
+
+                $("#posts tbody").append(
+                    "<tr>" +
+                    "<td>" + data['id'] + "</td>" +
+                    "<td>" + data['voice'] + "</td>" +
+                    "<td>" + data['text'] + "</td>" +
+                    "<td>" + data['status'] + "</td>" +
+                    "<td>" + player + download + "<br><button onclick='refreshPost(\"" + data['id'] + "\")' style='background:#4CAF50;color:white;border:none;padding:5px;border-radius:3px;cursor:pointer;'>🔄 Refresh</button></td>" +
+                    "</tr>"
+                );
+            });
+        },
+        error: function (xhr) {
+            alert("Error refreshing: " + xhr.responseText);
+        }
     });
 }
