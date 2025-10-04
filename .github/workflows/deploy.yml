@@ -37,9 +37,10 @@ jobs:
         run: terraform apply -auto-approve
         timeout-minutes: 30
 
-      - name: Update website with API URL
+      - name: Update website files
         run: |
           WEBSITE_BUCKET=$(cd terraform && terraform output -raw website_bucket)
-          sed -i 's|https://q7dnar5wh8.execute-api.us-east-1.amazonaws.com/prod|https://q7dnar5wh8.execute-api.us-east-1.amazonaws.com/prod|g' website/scripts.js
           aws s3 cp website/scripts.js s3://$WEBSITE_BUCKET/scripts.js --content-type "application/javascript"
+          aws s3 cp website/index.html s3://$WEBSITE_BUCKET/index.html --content-type "text/html"
+          aws s3 cp website/styles.css s3://$WEBSITE_BUCKET/styles.css --content-type "text/css"
           
