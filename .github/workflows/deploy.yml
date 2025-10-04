@@ -42,3 +42,4 @@ jobs:
           WEBSITE_BUCKET=$(cd terraform && terraform output -raw website_bucket)
           sed -i 's|https://q7dnar5wh8.execute-api.us-east-1.amazonaws.com/prod|https://q7dnar5wh8.execute-api.us-east-1.amazonaws.com/prod|g' website/scripts.js
           aws s3 cp website/scripts.js s3://$WEBSITE_BUCKET/scripts.js --content-type "application/javascript"
+          
