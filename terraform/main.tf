@@ -95,23 +95,6 @@ resource "aws_cloudfront_distribution" "website" {
   }
 }
 
-# Lambda Function (update existing)
-resource "aws_lambda_function" "api" {
-  function_name    = "polly-api"
-  filename         = "${path.module}/../deploy/api.zip"
-  handler          = "api.handler"
-  runtime          = "python3.11"
-  role             = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/content_lambda_role"
-  source_code_hash = filebase64sha256("${path.module}/../deploy/api.zip")
-  
-  environment {
-    variables = {
-      DYNAMODB_TABLE = "content_posts"
-      AUDIO_BUCKET   = "audio-storage-bucket-unique-2025"
-    }
-  }
-}
-
 data "aws_caller_identity" "current" {}
 
 # Outputs

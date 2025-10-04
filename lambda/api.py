@@ -15,27 +15,31 @@ def handler(event, context):
         return {'statusCode': 200, 'headers': headers, 'body': ''}
     
     try:
-        path = event['path']
+        path = event.get('path', '')
         method = event['httpMethod']
+        
+        print(f"Received request: {method} {path}")
+        print(f"Event: {json.dumps(event)}")
         
         if path == '/new_post' and method == 'POST':
             return create_post(event, headers)
-        elif path == '/get_post' and method == 'GET':
+        elif path == '/get-post' and method == 'GET':
             return get_post(event, headers)
         else:
-            return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': 'Not found'})}
+            return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': f'Path {path} not found'})}
             
     except Exception as e:
+        print(f"Error: {str(e)}")
         return {'statusCode': 500, 'headers': headers, 'body': json.dumps({'error': str(e)})}
 
 def create_post(event, headers):
-    body = json.loads(event['body'])
-    post_id = str(uuid.uuid4())
-    
-    dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
-    
     try:
+        body = json.loads(event['body'])
+        post_id = str(uuid.uuid4())
+        
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
+        
         # Save to DynamoDB
         table.put_item(Item={
             'id': post_id,
@@ -84,27 +88,20 @@ def create_post(event, headers):
         )
         
         print(f"Successfully processed post {post_id}")
+        return {'statusCode': 200, 'headers': headers, 'body': json.dumps(post_id)}
         
     except Exception as e:
-        print(f"Error processing audio for {post_id}: {str(e)}")
-        # Update status to failed
-        table.update_item(
-            Key={'id': post_id},
-            UpdateExpression='SET #status = :status',
-            ExpressionAttributeNames={'#status': 'status'},
-            ExpressionAttributeValues={':status': 'failed'}
-        )
-    
-    return {'statusCode': 200, 'headers': headers, 'body': json.dumps(post_id)}
+        print(f"Error processing audio: {str(e)}")
+        return {'statusCode': 500, 'headers': headers, 'body': json.dumps({'error': str(e)})}
 
 def get_post(event, headers):
-    dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
-    
-    query_params = event.get('queryStringParameters') or {}
-    post_id = query_params.get('postId', '*')
-    
     try:
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
+        
+        query_params = event.get('queryStringParameters') or {}
+        post_id = query_params.get('postId', '*')
+        
         if post_id == '*':
             items = table.scan()['Items']
         else:
@@ -122,5 +119,5 @@ def get_post(event, headers):
         return {'statusCode': 200, 'headers': headers, 'body': json.dumps(items)}
         
     except Exception as e:
-        print(f"Error retrieving post {post_id}: {str(e)}")
+        print(f"Error retrieving post: {str(e)}")
         return {'statusCode': 500, 'headers': headers, 'body': json.dumps({'error': str(e)})}

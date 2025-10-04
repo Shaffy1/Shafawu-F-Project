@@ -31,7 +31,7 @@ document.getElementById("searchButton").onclick = function () {
     }
 
     $.ajax({
-        url: API_BASE_URL + "/get_post?postId=" + postId,
+        url: API_BASE_URL + "/get-post?postId=" + postId,
         type: 'GET',
         success: function (response) {
             $('#posts tr').slice(1).remove();
@@ -74,7 +74,7 @@ document.getElementById("postText").onkeyup = function () {
 
 function refreshPost(postId) {
     $.ajax({
-        url: API_BASE_URL + "/get_post?postId=" + postId,
+        url: API_BASE_URL + "/get-post?postId=" + postId,
         type: 'GET',
         success: function (response) {
             $('#posts tr').slice(1).remove();
