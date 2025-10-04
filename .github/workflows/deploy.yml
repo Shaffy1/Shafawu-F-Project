@@ -39,7 +39,7 @@ jobs:
 
       - name: Update website files
         run: |
-          BUCKET_NAME=$(aws s3 ls | grep polly-website | awk '{print $3}')
+          BUCKET_NAME=$(aws s3 ls | grep polly-website | tail -1 | awk '{print $3}')
           aws s3 cp website/scripts.js s3://$BUCKET_NAME/scripts.js --content-type "application/javascript"
           aws s3 cp website/index.html s3://$BUCKET_NAME/index.html --content-type "text/html"
           aws s3 cp website/styles.css s3://$BUCKET_NAME/styles.css --content-type "text/css"
